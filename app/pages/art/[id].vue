@@ -10,7 +10,7 @@ const config = useRuntimeConfig()
 const showModal = ref(false)
 const allowNsfw = useCookie('allow-nsfw', { maxAge: 60 * 60 * 24 * 30 })
 const allowTempNsfw = ref(false)
-
+const isCopied = ref(false)
 const JSON_URL = config.public.apiBase
 
 // Используем useFetch с уникальным ключом, чтобы данные не кешировались неправильно
@@ -82,6 +82,17 @@ const temporaryAllow = () => {
   allowTempNsfw.value = true // Разрешаем показ в этой сессии
   showModal.value = false
 }
+
+const copyLink = () => {
+  navigator.clipboard.writeText(window.location.href)
+  // Можно добавить уведомление, если у тебя есть компонент для тостов
+  isCopied.value = true
+  
+  // Через 2 секунды возвращаем текст обратно
+  setTimeout(() => {
+    isCopied.value = false
+  }, 2000)
+}
 </script>
 
 <template>
@@ -136,24 +147,51 @@ const temporaryAllow = () => {
               </p>
             </div>
 
-            <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50 shadow-inner grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 text-left">
-              <div class="space-y-1">
-                <span class="text-xs uppercase text-slate-500 tracking-wider font-bold">ID ЗАПРОСА</span>
-                <p class="text-sm font-mono text-blue-300 break-all select-all bg-slate-900/50 p-2 rounded">
-                  {{ art.art_uuid }}
-                </p>
-              </div>
-              
-              <div class="space-y-1">
-                <span class="text-xs uppercase text-slate-500 tracking-wider font-bold">ДАТА СОЗДАНИЯ</span>
-                <p class="text-sm text-slate-200 bg-slate-900/50 p-2 rounded">
-                  {{ art.creation_date }}
-                </p>
-              </div>
-            </div>
-          </div>
+<div class="flex gap-3">
+        <button 
+          @click="copyLink"
+          class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg border border-slate-700 transition-all active:scale-95"
+        >
+          <Icon 
+    :name="isCopied ? 'ph:check-circle-bold' : 'ph:link-bold'" 
+    :class="isCopied ? 'text-green-400' : 'text-blue-400'"
+    class="transition-colors duration-300"
+  />
+          <span class="text-sm font-medium">{{ isCopied ? 'Скопировано!' : 'Копировать ссылку' }}</span>
+        </button>
 
+        <a 
+          v-if="art.twitter_link"
+          :href="art.twitter_link" 
+          target="_blank"
+          class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg border border-slate-700 transition-all"
+        >
+          <Icon name="ri:twitter-x-fill" class="text-white" />
+          <span class="text-sm font-medium">Автор</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 p-5 bg-slate-800/50 rounded-2xl border border-white/5 backdrop-blur-sm">
+        <div class="flex flex-col gap-1">
+          <span class="text-[10px] uppercase tracking-tighter text-slate-500 font-bold">ID Запроса</span>
+          <span class="text-xs text-blue-400 font-mono break-all leading-relaxed">
+            {{ art.art_uuid }}
+          </span>
         </div>
+        
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] uppercase tracking-tighter text-slate-500 font-bold">Дата создания</span>
+            <span class="text-xs text-white">{{ art.creation_date }}</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] uppercase tracking-tighter text-slate-500 font-bold">Добавлено в архив</span>
+            <span class="text-xs text-green-400">{{ art.request_timestamp || 'Не указано' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
       </main>
 
       <div v-else class="text-center flex-1 flex flex-col justify-center items-center">
