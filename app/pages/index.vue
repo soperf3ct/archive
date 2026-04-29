@@ -36,6 +36,22 @@ const loadedImages = ref({}) // Объект для хранения стату�
 const handleImageLoad = (id) => {
   loadedImages.value[id] = true
 }
+
+const getBlurClass = (art) => {
+  // 1. Если арт НЕ nsfw, вообще не блюрим
+  if (!art.nsfw) {
+    return 'opacity-100' // Просто делаем видимым, без блюра
+  }
+
+  // Если мы здесь, значит арт nsfw. Проверяем наличие safe_link
+  // 2. NSFW + Safe Link = легкий блюр
+  if (art.safe_link) {
+    return 'opacity-100 blur-sm'
+  }
+
+  // 3. NSFW без Safe Link = жесткий блюр
+  return 'opacity-100 blur-2xl scale-110'
+}
 </script>
 
 <template>
@@ -52,11 +68,6 @@ const handleImageLoad = (id) => {
       <template v-if="pending">
         <div v-for="i in 8" :key="i" class="relative overflow-hidden bg-slate-800 rounded-xl h-120 border border-slate-700">
           <div class="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-          <div class="h-40 bg-slate-700/50"></div>
-          <div class="p-4 space-y-3">
-            <div class="h-4 bg-slate-700/50 rounded w-3/4"></div>
-            <div class="h-3 bg-slate-700/50 rounded w-1/2"></div>
-          </div>
         </div>
       </template>
 
@@ -69,40 +80,33 @@ const handleImageLoad = (id) => {
           v-for="art in arts" 
           :key="art.art_uuid"
           :to="`/art/${art.art_uuid}`"
-          class="bg-slate-800 rounded-xl aspect-[3/4] overflow-hidden border border-slate-700 hover:border-blue-500 transition-all group flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]"
+          class="relative bg-slate-800 rounded-xl aspect-[3/4] overflow-hidden border border-slate-700 hover:border-blue-500 transition-all group flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]"
         >
-          <div class="h-120 bg-black relative overflow-hidden" :class="{ 'animate-shimmer': !loadedImages[art.request_id] }">
+          <div class="h-full w-full bg-black relative overflow-hidden" :class="{ 'animate-shimmer': !loadedImages[art.request_id] }">
             <img 
-              :src="art.safe_link" 
+              :src="art.safe_link || art.link"
               @load="handleImageLoad(art.request_id)"
               :class="[
           loadedImages[art.request_id] ? 'opacity-100' : 'opacity-0',
-          {
-        // СОСТОЯНИЕ 2: Максимальное скрытие (куки НЕТ)
-        'filter blur-2xl invert opacity-50': art.nsfw && allowNsfw !== true,
-        
-        // СОСТОЯНИЕ 3: Легкое скрытие (куки ЕСТЬ)
-        // Мы добавляем легкий блюр, когда доступ разрешен.
-        'filter blur-sm opacity-100': art.nsfw && allowNsfw === true
-      }
+          getBlurClass(art)
           ]"
-              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               @error="(e) => e.target.src = 'https://placehold.co/400x300?text=No+Image'"
             />
           <div v-if="loadedImages[art.request_id] && art.nsfw" class="absolute inset-0 flex flex-col gap-6 items-center justify-center bg-black/20">
-            <img src="/warning.png" class="h-[128px] w-[128px] invert opacity-90">
-            <span class="text-[14px] font-bold uppercase tracking-widest bg-white/10 px-2 py-1 backdrop-blur-md rounded border border-white/20">
+            <img src="/warning.png" class="h-[128px] w-[128px]" :class="art.safe_link ? 'invert opacity-90' : 'drop-shadow-[1000px_0_0_#ef4444] -translate-x-[1000px] -mr-px-[1000px]'">
+            <span class="text-[14px] font-bold uppercase tracking-widest bg-white/10 px-2 py-1 backdrop-blur-md rounded border border-white/20" :class="art.safe_link 
+            ? 'text-white bg-white/10 border-white/20' 
+            : 'text-red-500 bg-red-500/10 border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.5)]'">
               NSFW CONTENT
             </span>
           </div>
+          <div class="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent 
+                opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+          <h3 class="text-white text-lg font-bold leading-tight drop-shadow-md">
+            {{ art.art_name }}
+          </h3>
           </div>
-          <div class="p-4">
-            <h3 class="font-bold truncate group-hover:text-blue-400 transition-colors">
-              {{ art.art_name || 'Без названия' }}
-            </h3>
-            <p class="text-xs text-slate-400 mt-2">
-              {{ formatArtDate(art.creation_date) }}
-            </p>
           </div>
         </NuxtLink>
       </template>
