@@ -7,7 +7,10 @@ export const useAppI18n = () => {
     en: {
       "title.archive": 'archive', 
       "art.back": 'back',
-      loading: 'Loading...'
+      "nsfw.title": 'Adult Content Warning',
+      "nsfw.warning": 'This content is inappropriate for minors and it can ruin your productivity. Proceed w/ caution.',
+      "nsfw.allow": 'Allow',
+      "nsfw.permallow": 'Allow all the time'
     },
     ru: {
       "title.archive": 'архив',
