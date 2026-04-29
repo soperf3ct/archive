@@ -14,7 +14,11 @@ export default defineNuxtConfig({
   },
 
   app: {
-    baseURL: '/archive/' 
+    baseURL: '/archive/',
+    pageTransition: { 
+      name: 'page', 
+      mode: 'out-in' // Сначала старая страница исчезает, потом новая появляется
+    }
   },
 
   modules: ['@nuxtjs/tailwindcss'],
